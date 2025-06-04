@@ -58,6 +58,9 @@ dependencies:
   # Animations (optional; used below for simple fade/scale effects)
   flutter_animate: ^4.0.0
 
+  lucide_icons_flutter: ^3.0.4
+  font_awesome_flutter: ^10.8.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

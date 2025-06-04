@@ -5,7 +5,9 @@ import 'package:go_router/go_router.dart';
 
 import 'screens/home/home_screen.dart';
 import 'screens/about/about_screen.dart';
-import 'screens/contact/contact_screen.dart';  // ← Import ContactScreen
+import 'screens/contact/contact_screen.dart';
+import 'screens/faq/faq_screen.dart';         // ← new FAQ import
+import 'screens/donate/donate_screen.dart';   // ← new Donate import
 
 void main() {
   runApp(const MyApp());
@@ -16,7 +18,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1) Create a GoRouter with routes for Home, About, and Contact
     final GoRouter _router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -32,8 +33,15 @@ class MyApp extends StatelessWidget {
           path: '/contact',
           builder: (context, state) => const ContactScreen(),
         ),
-
-        // … add other routes (e.g. /faq, /donate) here if desired …
+        GoRoute(
+          path: '/faq',
+          builder: (context, state) => const FAQScreen(),
+        ),
+        GoRoute(
+          path: '/donate',
+          builder: (context, state) => const DonateScreen(),
+        ),
+        // Add additional routes here (e.g. /userResources, /alerts, etc.)
       ],
     );
 
@@ -44,7 +52,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      routerConfig: _router,  // ← plug in GoRouter
+      routerConfig: _router,
     );
   }
 }
