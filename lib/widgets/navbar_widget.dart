@@ -3,10 +3,17 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class NavbarWidget extends StatelessWidget {
+/// Responsive Navbar using a standard AppBar + Drawer approach.
+/// - On narrow screens (<600px), AppBar shows a working hamburger automatically.
+/// - On wide screens (>=600px), we hide the default leading and show inline buttons.
+class NavbarWidget extends StatelessWidget implements PreferredSizeWidget {
   const NavbarWidget({Key? key}) : super(key: key);
 
-  // The list of menu entries to display
+  // Height of the AppBar
+  @override
+  Size get preferredSize => const Size.fromHeight(56);
+
+  // Navigation items (label + route)
   static const List<_NavItemData> _navItems = [
     _NavItemData(label: 'Home', route: '/'),
     _NavItemData(label: 'About Us', route: '/about'),
@@ -17,107 +24,98 @@ class NavbarWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // If width is >= 600, show inline menu; otherwise show hamburger.
-        final bool isWide = constraints.maxWidth >= 600;
+    // Check screen width to decide layout
+    final bool isWide = MediaQuery.of(context).size.width >= 600;
 
-        return Container(
-          color: Colors.blue[800],
-          child: SafeArea(
-            bottom: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  // ===== LOGO =====
-                  // You can remove this Container entirely if the logo is causing issues.
-                  // Just comment out or delete the entire SizedBox(...) block below.
-                  SizedBox(
-                    height: 32,
-                    child: GestureDetector(
-                      onTap: () => context.go('/'),
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        fit: BoxFit.fitHeight,
-                        errorBuilder: (context, error, stackTrace) {
-                          // If the logo fails to load, simply show a placeholder icon
-                          return const Icon(Icons.home, color: Colors.white, size: 32);
-                        },
-                      ),
-                    ),
-                  ),
+    return AppBar(
+      backgroundColor: Colors.blue[800],
+      elevation: 2,
+      automaticallyImplyLeading: !isWide,
+      // When isWide == true, hide the default leading (hamburger).
+      // When isWide == false, AppBar will show the hamburger automatically
+      // because we have a Drawer attached to the Scaffold.
 
-                  const SizedBox(width: 16),
-
-                  // ===== TITLE (OPTIONAL) =====
-                  // You could also put a Text( 'FMAS', style: ... ) next to the logo here.
-                  // For now, we omit extra text to keep things compact.
-
-                  // Spacer pushes menu items or hamburger to the right
-                  const Spacer(),
-
-                  if (isWide)
-                  // ===== INLINE MENU ITEMS =====
-                    Row(
-                      children: _navItems.map((item) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8),
-                          child: TextButton(
-                            onPressed: () => context.go(item.route),
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              textStyle: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            child: Text(item.label),
-                          ),
-                        );
-                      }).toList(),
-                    )
-                  else
-                  // ===== HAMBURGER ICON =====
-                    IconButton(
-                      icon: const Icon(Icons.menu, color: Colors.white, size: 28),
-                      onPressed: () {
-                        Scaffold.of(context).openDrawer();
-                      },
-                    ),
-                ],
+      title: Row(
+        children: [
+          // ===== LOGO =====
+          SizedBox(
+            height: 32,
+            child: GestureDetector(
+              onTap: () => context.go('/'),
+              child: Image.asset(
+                'assets/images/logo.png',
+                fit: BoxFit.fitHeight,
+                errorBuilder: (context, error, stackTrace) {
+                  // Placeholder if logo fails to load
+                  return const Icon(
+                    Icons.home,
+                    color: Colors.white,
+                    size: 32,
+                  );
+                },
               ),
             ),
           ),
-        );
-      },
+
+          const SizedBox(width: 8),
+
+          // Optional: App name text next to logo (uncomment if you want)
+          // Text(
+          //   'FMAS',
+          //   style: TextStyle(
+          //     color: Colors.white,
+          //     fontSize: isWide ? 20 : 18,
+          //     fontWeight: FontWeight.bold,
+          //   ),
+          // ),
+        ],
+      ),
+
+      // If wide, show inline menu buttons as actions
+      // If narrow, do not supply actions (so only the hamburger shows).
+      actions: isWide
+          ? _navItems
+          .map((item) => TextButton(
+        onPressed: () => context.go(item.route),
+        style: TextButton.styleFrom(
+          foregroundColor: Colors.white,
+          textStyle: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        child: Text(item.label),
+      ))
+          .toList()
+          : null,
     );
   }
 }
 
-/// Required to wrap your Scaffold around a Drawer when using the above Navbar.
-/// See instructions below.
+/// A Scaffold wrapper that attaches our NavbarWidget as the AppBar
+/// and provides a Drawer that automatically works when the screen is narrow.
 class NavbarScaffold extends StatelessWidget {
-  /// The main body of the page
+  /// The primary content of the page (below the AppBar)
   final Widget body;
 
+  /// Optional: if you want a footer, simply include it inside the `body`
+  /// (e.g. wrap your page content and footer in a Column before passing in).
   const NavbarScaffold({required this.body, Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Attach our responsive AppBar from above
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(56),
-        child: NavbarWidget(),
-      ),
-      // Define the Drawer that opens on small screens
+      // Attach our responsive NavbarWidget here
+      appBar: const NavbarWidget(),
+
+      // Provide the Drawer. On narrow screens, NavbarWidget's AppBar
+      // will automatically show the hamburger to open this Drawer.
       drawer: Drawer(
         backgroundColor: Colors.white,
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            // Optional: Drawer header
+            // You can customize this header as you like
             DrawerHeader(
               decoration: BoxDecoration(color: Colors.blue[800]),
               child: Center(
@@ -125,19 +123,23 @@ class NavbarScaffold extends StatelessWidget {
                   'FMAS Menu',
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: MediaQuery.of(context).size.width >= 600 ? 24 : 20,
+                    fontSize:
+                    MediaQuery.of(context).size.width >= 600 ? 24 : 20,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
-            // Drawer items (same as navbar links)
+
+            // Create a ListTile for each nav item
             ...NavbarWidget._navItems.map((item) {
               return ListTile(
-                title: Text(item.label,
-                    style: const TextStyle(fontSize: 18)),
+                title: Text(
+                  item.label,
+                  style: const TextStyle(fontSize: 18),
+                ),
                 onTap: () {
-                  Navigator.of(context).pop(); // close the drawer
+                  Navigator.of(context).pop(); // Close the drawer
                   context.go(item.route);
                 },
               );
@@ -145,12 +147,13 @@ class NavbarScaffold extends StatelessWidget {
           ],
         ),
       ),
+
       body: body,
     );
   }
 }
 
-/// Simple data class for navbar items
+/// Simple class to hold label + route
 class _NavItemData {
   final String label;
   final String route;
