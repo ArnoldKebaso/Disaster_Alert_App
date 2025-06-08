@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // ← New package
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../widgets/navbar_widget.dart';
 import '../../widgets/footer_widget.dart';
 
@@ -66,8 +66,8 @@ class DonateScreen extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6366F1),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 12),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8)),
                 ),
@@ -79,194 +79,173 @@ class DonateScreen extends StatelessWidget {
       );
     }
 
-    return Scaffold(
-      // ===== NAVBAR =====
-      appBar: const PreferredSize(
-        preferredSize: Size.fromHeight(60),
-        child: NavbarWidget(),
-      ),
-
-      // ===== BODY =====
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            // ===== HEADER =====
-            Container(
-              width: double.infinity,
-              color: Colors.blue[800],
-              padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-              child: Column(
-                children: [
-                  Text(
-                    'Empower Disaster Response',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: width > 800 ? 36 : 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Your generosity fuels our mission to provide immediate relief and build resilient communities.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: width > 800 ? 18 : 16,
-                    ),
-                  ),
-                ],
+    // Build the scrollable content
+    final content = Column(
+      children: [
+        // ===== HEADER =====
+        Container(
+          width: double.infinity,
+          color: Colors.blue[800],
+          padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+          child: Column(
+            children: [
+              Text(
+                'Empower Disaster Response',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: width > 800 ? 36 : 28,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // ===== DONATION OPTIONS GRID =====
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: GridView.count(
-                crossAxisCount: width > 1000
-                    ? 3
-                    : width > 600
-                    ? 2
-                    : 1,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  // 1) Monetary Donations
-                  _buildOptionCard(
-                    iconData: FontAwesomeIcons.donate,
-                    title: 'Monetary Donations',
-                    description:
-                    'Give a one-time or recurring financial gift to support sensor maintenance, staff salaries, and rapid response operations.',
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Redirecting to Monetary Donation gateway…'),
-                        ),
-                      );
-                    },
-                  ),
-
-                  // 2) Supplies & Relief Kits
-                  _buildOptionCard(
-                    iconData: FontAwesomeIcons.boxesPacking,
-                    title: 'Supplies & Relief Kits',
-                    description:
-                    'Contribute essential goods—food, water, blankets, first-aid kits—for immediate distribution to affected families.',
-                    onPressed: () {
-                      context.go('/contact');
-                    },
-                  ),
-
-                  // 3) Volunteer Sign-ups
-                  _buildOptionCard(
-                    iconData: FontAwesomeIcons.handsHelping,
-                    title: 'Volunteer Sign-ups',
-                    description:
-                    'Join our network of 5,000+ volunteers. Provide on-ground support during flood emergencies and help communities recover.',
-                    onPressed: () {
-                      context.go('/contact');
-                    },
-                  ),
-
-                  // 4) Corporate Partnerships
-                  _buildOptionCard(
-                    iconData: FontAwesomeIcons.handshake,
-                    title: 'Corporate Partnerships',
-                    description:
-                    'Partner with FMAS at the organizational level—sponsor equipment, underwriting, and community outreach programs.',
-                    onPressed: () {
-                      context.go('/contact');
-                    },
-                  ),
-
-                  // 5) In-Kind Services (Tech, Logistics)
-                  _buildOptionCard(
-                    iconData: FontAwesomeIcons.tools,
-                    title: 'In-Kind Services',
-                    description:
-                    'Offer professional services (e.g., GIS mapping, software development, logistics) to strengthen our platform.',
-                    onPressed: () {
-                      context.go('/contact');
-                    },
-                  ),
-
-                  // 6) Become a Partner
-                  _buildOptionCard(
-                    iconData: FontAwesomeIcons.gift,
-                    title: 'Become a Partner',
-                    description:
-                    'Collaborate long-term with FMAS. Visit our partnerships team to co-develop localized disaster response solutions.',
-                    onPressed: () {
-                      context.go('/contact');
-                    },
-                  ),
-                ],
+              const SizedBox(height: 12),
+              Text(
+                'Your generosity fuels our mission to provide immediate relief and build resilient communities.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: width > 800 ? 18 : 16,
+                ),
               ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // ===== IMPACT STATEMENT =====
-            Container(
-              width: double.infinity,
-              color: const Color(0xFF0C4A6E),
-              padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-              child: Column(
-                children: [
-                  Icon(
-                    FontAwesomeIcons.gift,
-                    size: 48,
-                    color: Colors.cyan[300],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Your Impact Matters',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.cyan[100],
-                      fontSize: width > 800 ? 28 : 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Every contribution helps us maintain 24/7 monitoring systems '
-                        'and deploy emergency teams within 30 minutes of disaster alerts.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.cyan[200],
-                      fontSize: width > 800 ? 18 : 16,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  // Key Stats Row
-                  Wrap(
-                    alignment: WrapAlignment.center,
-                    spacing: 24,
-                    runSpacing: 16,
-                    children: const [
-                      _StatBox(label: '5,000+ Lives Saved'),
-                      _StatBox(label: '200+ Communities'),
-                      _StatBox(label: '85% Efficiency'),
-                      _StatBox(label: '24/7 Support'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 48),
-          ],
+            ],
+          ),
         ),
-      ),
 
-      // ===== FOOTER =====
-      bottomNavigationBar: const FooterWidget(),
+        const SizedBox(height: 32),
+
+        // ===== DONATION OPTIONS GRID =====
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: GridView.count(
+            crossAxisCount: width > 1000
+                ? 3
+                : width > 600
+                ? 2
+                : 1,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildOptionCard(
+                iconData: FontAwesomeIcons.donate,
+                title: 'Monetary Donations',
+                description:
+                'Give a one-time or recurring financial gift to support sensor maintenance, staff salaries, and rapid response operations.',
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                      Text('Redirecting to Monetary Donation gateway…'),
+                    ),
+                  );
+                },
+              ),
+              _buildOptionCard(
+                iconData: FontAwesomeIcons.boxesPacking,
+                title: 'Supplies & Relief Kits',
+                description:
+                'Contribute essential goods—food, water, blankets, first-aid kits—for immediate distribution to affected families.',
+                onPressed: () => context.go('/contact'),
+              ),
+              _buildOptionCard(
+                iconData: FontAwesomeIcons.handsHelping,
+                title: 'Volunteer Sign-ups',
+                description:
+                'Join our network of 5,000+ volunteers. Provide on-ground support during flood emergencies and help communities recover.',
+                onPressed: () => context.go('/contact'),
+              ),
+              _buildOptionCard(
+                iconData: FontAwesomeIcons.handshake,
+                title: 'Corporate Partnerships',
+                description:
+                'Partner with FMAS at the organizational level—sponsor equipment, underwriting, and community outreach programs.',
+                onPressed: () => context.go('/contact'),
+              ),
+              _buildOptionCard(
+                iconData: FontAwesomeIcons.tools,
+                title: 'In-Kind Services',
+                description:
+                'Offer professional services (e.g., GIS mapping, software development, logistics) to strengthen our platform.',
+                onPressed: () => context.go('/contact'),
+              ),
+              _buildOptionCard(
+                iconData: FontAwesomeIcons.gift,
+                title: 'Become a Partner',
+                description:
+                'Collaborate long-term with FMAS. Visit our partnerships team to co-develop localized disaster response solutions.',
+                onPressed: () => context.go('/contact'),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 32),
+
+        // ===== IMPACT STATEMENT =====
+        Container(
+          width: double.infinity,
+          color: const Color(0xFF0C4A6E),
+          padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+          child: Column(
+            children: [
+              Icon(
+                FontAwesomeIcons.gift,
+                size: 48,
+                color: Colors.cyan[300],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Your Impact Matters',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.cyan[100],
+                  fontSize: width > 800 ? 28 : 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Every contribution helps us maintain 24/7 monitoring systems '
+                    'and deploy emergency teams within 30 minutes of disaster alerts.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.cyan[200],
+                  fontSize: width > 800 ? 18 : 16,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 24,
+                runSpacing: 16,
+                children: const [
+                  _StatBox(label: '5,000+ Lives Saved'),
+                  _StatBox(label: '200+ Communities'),
+                  _StatBox(label: '85% Efficiency'),
+                  _StatBox(label: '24/7 Support'),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 48),
+      ],
+    );
+
+    return NavbarScaffold(
+      body: Column(
+        children: [
+          // Make the content scrollable
+          Expanded(
+            child: SingleChildScrollView(child: content),
+          ),
+          // Footer at the bottom
+          const FooterWidget(),
+        ],
+      ),
     );
   }
 }
