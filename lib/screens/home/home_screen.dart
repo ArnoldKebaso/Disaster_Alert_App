@@ -98,17 +98,25 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final double width = MediaQuery.of(context).size.width;
 
-    return Scaffold(
+    //return Scaffold(
       // ===== NAVBAR =====
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(60),
-        child: NavbarWidget(),
-      ),
+      //appBar: PreferredSize(
+        //preferredSize: const Size.fromHeight(60),
+        //child: NavbarWidget(),
+      //),
 
       // ===== BODY =====
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
+      //body: SingleChildScrollView(
+        //child: Column(
+          //children: [
+return NavbarScaffold(
+  body: Column(
+    children: [
+      Expanded(
+      // Makes everything scrollable
+      child: SingleChildScrollView(
+       child: Column(
+        children: [
             // ===== HERO SECTION =====
             Stack(
               children: [
@@ -937,11 +945,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
+    ),
 
       // ===== FOOTER =====
-      bottomNavigationBar: const FooterWidget(),
-    );
-  }
+
+    const FooterWidget(),
+    ],
+    ),
+  );
+}
 
   // ==================== WIDGET HELPERS ====================
 
