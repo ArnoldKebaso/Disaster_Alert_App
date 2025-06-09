@@ -15,8 +15,9 @@ class NavbarWidget extends StatelessWidget implements PreferredSizeWidget {
     _NavItemData(label: 'Home', route: '/'),
     _NavItemData(label: 'About Us', route: '/about'),
     _NavItemData(label: 'Contact Us', route: '/contact'),
-    _NavItemData(label: 'FAQ', route: '/faq'),
     _NavItemData(label: 'Donate', route: '/donate'),
+    _NavItemData(label: 'Resources', route: '/resources'),
+    _NavItemData(label: 'FAQ', route: '/faq'),
   ];
 
   @override
