@@ -4,63 +4,56 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../api/fmas_api.dart';
 import '../models/user.dart';
 
-/// Represents the authentication state.
+/// Holds the authentication state.
 class AuthState {
   final bool isAuthenticated;
   final User? user;
-  final String? error;
   final bool loading;
+  final String? error;
 
   AuthState._({
     required this.isAuthenticated,
     this.user,
-    this.error,
     this.loading = false,
+    this.error,
   });
 
-  // Initial: not logged in
   factory AuthState.initial() =>
       AuthState._(isAuthenticated: false, loading: false);
 
-  // Loading: login/register in progress
   factory AuthState.loading() =>
       AuthState._(isAuthenticated: false, loading: true);
 
-  // Authenticated: store the User
   factory AuthState.authenticated(User user) =>
       AuthState._(isAuthenticated: true, user: user);
 
-  // Error: login/register failed
-  factory AuthState.error(String message) =>
-      AuthState._(isAuthenticated: false, error: message);
+  factory AuthState.error(String msg) =>
+      AuthState._(isAuthenticated: false, error: msg);
 }
 
-/// StateNotifier to handle login, logout, etc.
+/// Manages login/logout with FMAS API.
 class AuthNotifier extends StateNotifier<AuthState> {
   AuthNotifier() : super(AuthState.initial());
 
-  /// Attempt login against the backend
+  /// Call backend to log in.
   Future<void> login(String email, String password) async {
     state = AuthState.loading();
     try {
       final data = await FmasApi.instance.login(email, password);
       final user = User.fromJson(data);
-      // TODO: store user.token in secure storage for future calls
+      // TODO: store user.token in secure storage
       state = AuthState.authenticated(user);
     } catch (e) {
       state = AuthState.error(e.toString());
     }
   }
 
-  /// Log out locally
+  /// Clear auth state.
   void logout() {
-    // TODO: clear secure storage if used
     state = AuthState.initial();
   }
 }
 
-/// Expose AuthNotifier via Riverpod
+/// Expose AuthNotifier to the app.
 final authProvider =
-StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier();
-});
+StateNotifierProvider<AuthNotifier, AuthState>((ref) => AuthNotifier());

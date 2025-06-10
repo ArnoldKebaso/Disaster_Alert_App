@@ -31,7 +31,7 @@ class MyApp extends ConsumerWidget {
       initialLocation: '/',
       // Called on every navigation attempt
       redirect: (BuildContext context, GoRouterState state) {
-        final loggingIn = state.subloc == '/login';
+        final loggingIn = state.uri.toString() == '/login';
         // If not authenticated and not heading to /login, redirect to /login
         if (!authState.isAuthenticated && !loggingIn) return '/login';
         // If authenticated and trying to go to /login, send to home

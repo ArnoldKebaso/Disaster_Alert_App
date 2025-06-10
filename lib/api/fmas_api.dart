@@ -1,34 +1,149 @@
-// lib/api/fmas_api.dart
+// lib/screens/auth/login_screen.dart
 
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';            // Google Sign-In
+import '../../api/fmas_api.dart';                               // Your API client
+import '../../models/user.dart';                                // User model
+import '../../providers/auth_provider.dart';                    // Auth state
+import 'package:go_router/go_router.dart';                      // Navigation
 
-/// Singleton HTTP client for FMAS backend.
-class FmasApi {
-  FmasApi._();
-  static final instance = FmasApi._();
+class LoginScreen extends ConsumerStatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
 
-  // Replace with your actual backend base URL
-  final Uri _baseUrl = Uri.parse('https://your-backend.example.com/api');
+  @override
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+}
 
-  /// POST /auth/login
-  Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await http.post(
-      _baseUrl.replace(path: '${_baseUrl.path}/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
+class _LoginScreenState extends ConsumerState<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  String _email = '', _password = '';
+
+  /// Called when the user taps "Login"
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    _formKey.currentState!.save();
+
+    // Trigger login via AuthNotifier
+    await ref.read(authProvider.notifier).login(_email, _password);
+    // On success, GoRouter redirect in main.dart will navigate home
+  }
+
+  /// Initiates Google Sign-In flow
+  Future<void> _googleSignIn() async {
+    final account = await GoogleSignIn().signIn();
+    if (account == null) return; // user cancelled
+
+    final googleAuth = await account.authentication;
+    // Exchange Google ID token for FMAS JWT
+    final data = await FmasApi.instance.loginWithGoogle(googleAuth.idToken!);
+    final user = User.fromJson(data);
+
+    // Directly update AuthState to authenticated
+    ref.read(authProvider.notifier).state =
+        AuthState.authenticated(user);
+
+    // Then navigate to home
+    context.go('/');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = ref.watch(authProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Welcome Back')),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Form(
+              key: _formKey,
+              child: Column(children: [
+                // Email field
+                TextFormField(
+                  decoration: const InputDecoration(labelText: 'Email'),
+                  keyboardType: TextInputType.emailAddress,
+                  onSaved: (val) => _email = val!.trim(),
+                  validator: (val) =>
+                  (val != null && val.contains('@')) ? null : 'Invalid email',
+                ),
+                const SizedBox(height: 16),
+
+                // Password field
+                TextFormField(
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.remove_red_eye),
+                      onPressed: () {},
+                    ),
+                  ),
+                  obscureText: true,
+                  onSaved: (val) => _password = val!,
+                  validator: (val) =>
+                  (val != null && val.length >= 6) ? null : 'Min 6 chars',
+                ),
+                const SizedBox(height: 24),
+
+                // Show error message if any
+                if (auth.error != null)
+                  Text(auth.error!, style: const TextStyle(color: Colors.red)),
+                const SizedBox(height: 12),
+
+                // Submit button or loading indicator
+                auth.loading
+                    ? const CircularProgressIndicator()
+                    : SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    child: const Text('Login'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+              ]),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Forgot password link
+            TextButton(
+              onPressed: () => context.go('/forgot-password'),
+              child: const Text('Forgot Password?'),
+            ),
+
+            const Divider(height: 32),
+            const Text('Or continue with', textAlign: TextAlign.center),
+
+            const SizedBox(height: 16),
+            // Google Sign-In button
+            OutlinedButton.icon(
+              onPressed: _googleSignIn,
+              icon: Image.asset('assets/images/google_logo.png', height: 24),
+              label: const Text('Sign in with Google'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+
+            const Spacer(),
+            // Navigate to Register
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text("Don't have an account? "),
+                TextButton(
+                  onPressed: () => context.go('/register'),
+                  child: const Text('Register'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
-    } else {
-      throw Exception('Login failed: ${response.body}');
-    }
   }
-
-  /// Stub for register endpoint
-  Future<Map<String, dynamic>> register(String email, String password) {
-    throw UnimplementedError();
-  }
-
-// TODO: add forgotPassword, resetPassword, fetchAlerts, submitReport, etc.
 }
