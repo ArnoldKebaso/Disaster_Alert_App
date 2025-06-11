@@ -1,6 +1,6 @@
 // lib/models/user.dart
 
-/// Data class for the logged-in user & JWT token.
+/// User model representing auth response.
 class User {
   final String id;
   final String email;
@@ -12,7 +12,7 @@ class User {
     required this.token,
   });
 
-  /// Create a User from the JSON response of /auth/login
+  /// Construct from JSON map returned by /auth/login or /auth/register
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['user']['id'] as String,

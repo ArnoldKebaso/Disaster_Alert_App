@@ -1,11 +1,14 @@
+// lib/screens/auth/register_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../api/fmas_api.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
+
   @override
   ConsumerState<RegisterScreen> createState() => _RegisterScreenState();
 }
@@ -17,10 +20,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _submitting = false, _showPassword = false, _showConfirm = false;
 
   Future<void> _detectLocation() async {
-    final pos = await Geolocator.getCurrentPosition();
-    setState(() {
-      _location = '${pos.latitude}, ${pos.longitude}';
-    });
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Enable location services')));
+      return;
+    }
+    final perm = await Geolocator.checkPermission();
+    if (perm == LocationPermission.denied) {
+      final req = await Geolocator.requestPermission();
+      if (req == LocationPermission.denied) return;
+    }
+    if (perm == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Location permanently denied')));
+      return;
+    }
+    final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+    setState(() => _location = '${pos.latitude}, ${pos.longitude}');
   }
 
   Future<void> _submit() async {
@@ -28,18 +45,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _formKey.currentState!.save();
     setState(() => _submitting = true);
     try {
-      final data = await FmasApi.instance.register(
-        username: _username,
-        email: _email,
-        password: _password,
-        phone: _phone,
-        location: _location,
-      );
-      final user = User.fromJson(data);
-      ref.read(authProvider.notifier).state =
-          AuthState.authenticated(user);
+      await ref.read(authProvider.notifier).register(
+            _username,
+            _email,
+            _password,
+            _phone,
+            _location,
+          );
+      if (ref.read(authProvider).isAuthenticated) {
+        context.go('/');
+      }
     } catch (e) {
-      // show Snackbar
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
@@ -57,23 +73,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           child: Form(
             key: _formKey,
             child: Column(children: [
-              // Username
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Username'),
                 onSaved: (v) => _username = v!.trim(),
                 validator: (v) =>
-                (v != null && v.isNotEmpty) ? null : 'Enter username',
+                    (v != null && v.isNotEmpty) ? null : 'Enter username',
               ),
-              const SizedBox(height: 12),
-              // Email
+              const SizedBox(height: 16),
               TextFormField(
                 decoration: const InputDecoration(labelText: 'Email'),
+                keyboardType: TextInputType.emailAddress,
                 onSaved: (v) => _email = v!.trim(),
                 validator: (v) =>
-                (v != null && v.contains('@')) ? null : 'Invalid email',
+                    (v != null && v.contains('@')) ? null : 'Invalid email',
               ),
-              const SizedBox(height: 12),
-              // Password
+              const SizedBox(height: 16),
               TextFormField(
                 decoration: InputDecoration(
                   labelText: 'Password',
@@ -88,72 +102,61 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 obscureText: !_showPassword,
                 onSaved: (v) => _password = v!,
                 validator: (v) =>
-                (v != null && v.length >= 6) ? null : 'Min 6 chars',
+                    (v != null && v.length >= 6) ? null : 'Min 6 chars',
               ),
-              const SizedBox(height: 12),
-              // Confirm Password
+              const SizedBox(height: 16),
               TextFormField(
                 decoration: InputDecoration(
                   labelText: 'Confirm Password',
                   suffixIcon: IconButton(
-                    icon: Icon(_showConfirm
-                        ? Icons.visibility_off
-                        : Icons.visibility),
+                    icon: Icon(
+                        _showConfirm ? Icons.visibility_off : Icons.visibility),
                     onPressed: () =>
                         setState(() => _showConfirm = !_showConfirm),
                   ),
                 ),
                 obscureText: !_showConfirm,
-                validator: (v) => (v == _password)
-                    ? null
-                    : 'Passwords do not match',
+                validator: (v) =>
+                    (v != null && v == _password) ? null : 'Passwords mismatch',
               ),
-              const SizedBox(height: 12),
-              // Phone Number
+              const SizedBox(height: 16),
               TextFormField(
                 decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  hintText: '+254712345678',
-                ),
+                    labelText: 'Phone Number', hintText: '+2547...'),
                 keyboardType: TextInputType.phone,
                 onSaved: (v) => _phone = v!.trim(),
-                validator: (v) =>
-                (v != null && v.startsWith('+')) ? null : 'Include country code',
+                validator: (v) => (v != null && v.startsWith('+'))
+                    ? null
+                    : 'Include country code',
               ),
-              const SizedBox(height: 12),
-              // Location field + detect button
+              const SizedBox(height: 16),
               Row(children: [
                 Expanded(
                   child: TextFormField(
                     decoration: const InputDecoration(labelText: 'Location'),
                     readOnly: true,
-                    controller:
-                    TextEditingController(text: _location),
+                    controller: TextEditingController(text: _location),
                   ),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton(
-                  onPressed: _detectLocation,
-                  child: const Text('Detect'),
-                )
+                OutlinedButton(
+                    onPressed: _detectLocation, child: const Text('Detect')),
               ]),
               const SizedBox(height: 24),
-              // Submit
               _submitting
                   ? const CircularProgressIndicator()
                   : SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submit,
-                  child: const Text('Register'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                ),
-              ),
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _submit,
+                        child: const Text('Register'),
+                        style: ElevatedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16)),
+                      ),
+                    ),
               const SizedBox(height: 12),
               TextButton(
-                onPressed: () => context.push('/login'),
+                onPressed: () => context.go('/login'),
                 child: const Text('Already have an account? Login'),
               ),
             ]),
