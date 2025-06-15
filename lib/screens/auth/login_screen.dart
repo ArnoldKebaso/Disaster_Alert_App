@@ -2,12 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import '../../providers/auth_provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher_string.dart';
+import '../../providers/auth_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({Key? key}) : super(key: key);
+  const LoginScreen({super.key});
 
   @override
   ConsumerState<LoginScreen> createState() => _LoginScreenState();
@@ -15,98 +15,124 @@ class LoginScreen extends ConsumerStatefulWidget {
 
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  String _email = '',
-      _password = '';
+  final _emailCtl = TextEditingController();
+  final _passwordCtl = TextEditingController();
+  bool _showPassword = false;
+  bool _loading = false;
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
-    _formKey.currentState!.save();
-    await ref.read(authProvider.notifier).login(_email, _password);
-    if (ref
-        .read(authProvider)
-        .isAuthenticated) context.go('/');
+    setState(() => _loading = true);
+    try {
+      await ref
+          .read(authProvider.notifier)
+          .login(_emailCtl.text.trim(), _passwordCtl.text);
+      final user = ref.read(authProvider).user!;
+      final redirect = user.role == 'admin' ? '/subscriptions' : '/dashboard';
+      context.go(redirect);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login failed. Check credentials.')),
+      );
+    } finally {
+      setState(() => _loading = false);
+    }
   }
 
-  Future<void> _googleSignIn() async {
-    final acct = await GoogleSignIn().signIn();
-    if (acct == null) return;
-    final auth = await acct.authentication;
-    await ref.read(authProvider.notifier).loginWithGoogle(auth.idToken!);
-    if (ref
-        .read(authProvider)
-        .isAuthenticated) context.go('/');
+  void _googleSignIn() {
+    // exactly like your React <button onClick={() => window.location=...}>
+    launchUrlString('http://localhost:3000/auth/google');
+  }
+
+  @override
+  void dispose() {
+    _emailCtl.dispose();
+    _passwordCtl.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authProvider);
-
     return Scaffold(
-      appBar: AppBar(title: const Text('Welcome Back')),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(children: [
-          Form(
-            key: _formKey,
-            child: Column(children: [
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Email'),
-                onSaved: (v) => _email = v!.trim(),
-                validator: (v) =>
-                (v != null && v.contains('@')) ? null : 'Invalid email',
+      appBar: AppBar(title: const Text('Login')),
+      body: Center(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  TextFormField(
+                    controller: _emailCtl,
+                    decoration: const InputDecoration(labelText: 'Email'),
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (v) => v != null && v.contains('@')
+                        ? null
+                        : 'Enter a valid email',
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _passwordCtl,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _showPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                        ),
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
+                      ),
+                    ),
+                    obscureText: !_showPassword,
+                    validator: (v) =>
+                        v != null && v.isNotEmpty ? null : 'Required',
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _loading ? null : _submit,
+                      child: _loading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Login'),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => context.go('/forgot-password'),
+                    child: const Text('Forgot Password?'),
+                  ),
+                  const Divider(),
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black87,
+                    ),
+                    onPressed: _googleSignIn,
+                    icon: const Icon(Icons.login, size: 20),
+                    label: const Text('Sign in with Google'),
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () => context.go('/register'),
+                    child: const Text("Don't have an account? Register"),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                onSaved: (v) => _password = v!,
-                validator: (v) =>
-                (v != null && v.length >= 6) ? null : 'Min 6 chars',
-              ),
-              const SizedBox(height: 24),
-              if (auth.error != null)
-                Text(auth.error!, style: const TextStyle(color: Colors.red)),
-              const SizedBox(height: 12),
-              auth.loading
-                  ? const CircularProgressIndicator()
-                  : SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _submit,
-                  child: const Text('Login'),
-                  style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16)),
-                ),
-              ),
-            ]),
+            ),
           ),
-          const SizedBox(height: 16),
-          TextButton(
-            onPressed: () => context.go('/forgot-password'),
-            child: const Text('Forgot Password?'),
-          ),
-          const Divider(height: 32),
-          const Text('Or continue with', textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          OutlinedButton.icon(
-            icon: Image.asset('assets/images/google_logo.png', height: 24),
-            label: const Text('Sign in with Google'),
-            onPressed: _googleSignIn,
-            style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12)),
-          ),
-          const Spacer(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text("Don't have an account? "),
-              TextButton(
-                onPressed: () => GoRouter.of(context).go('/register'),
-                child: const Text('Register'),
-              ),
-            ],
-          ),
-        ]),
+        ),
       ),
     );
   }
