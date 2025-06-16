@@ -1,23 +1,19 @@
 // lib/models/user.dart
 
-/// User model representing auth response.
 class User {
-  final String id;
+  final int id;
   final String email;
-  final String token;
+  final String role; // 'admin' | 'reporter' | 'viewer'
 
   User({
     required this.id,
     required this.email,
-    required this.token,
+    required this.role,
   });
 
-  /// Construct from JSON map returned by /auth/login or /auth/register
-  factory User.fromJson(Map<String, dynamic> json) {
-    return User(
-      id: json['user']['id'] as String,
-      email: json['user']['email'] as String,
-      token: json['token'] as String,
-    );
-  }
+  factory User.fromJson(Map<String, dynamic> json) => User(
+        id: json['id'] as int,
+        email: json['email'] as String,
+        role: json['role'] as String,
+      );
 }
